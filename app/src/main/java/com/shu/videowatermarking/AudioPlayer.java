@@ -1,4 +1,4 @@
-package com.shu.videowatermarking;
+package com.shu.VideoWatermarking;
 
 import android.media.AudioManager;
 import android.media.AudioTrack;

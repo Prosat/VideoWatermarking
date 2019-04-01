@@ -1,4 +1,4 @@
-package com.shu.videowatermarking;
+package com.shu.VideoWatermarking;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

@@ -1,4 +1,4 @@
-package com.shu.videowatermarking;
+package com.shu.VideoWatermarking;
 
 import android.media.AudioFormat;
 import android.media.MediaCodec;
