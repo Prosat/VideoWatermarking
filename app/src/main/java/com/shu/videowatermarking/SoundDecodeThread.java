@@ -17,6 +17,7 @@ public class SoundDecodeThread extends Thread {
 	private MediaCodec mediaCodec;
 
 	private AudioPlayer mPlayer;
+
 	private String path;
 
 	public SoundDecodeThread(String path) {

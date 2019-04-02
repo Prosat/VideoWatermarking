@@ -1,11 +1,9 @@
 package com.shu.VideoWatermarking;
 
-import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.os.Environment;
 import android.util.Log;
 import android.view.Surface;
 
@@ -17,9 +15,8 @@ public class VideoDecodeThread extends Thread {
 
 	private final static String TAG = "VideoDecodeThread";
 
-	/** 用来读取音視频文件 提取器 */
 	private MediaCodec mediaCodec;
-	/** 用来解码 解碼器 */
+
 	private Surface surface;
 
 	private String path;
@@ -46,11 +43,13 @@ public class VideoDecodeThread extends Thread {
 				mediaExtractor.selectTrack(i); // 切换到视频信道
 				try {
 					mediaCodec = MediaCodec.createDecoderByType(mimeType); // 创建解码器,提供数据输出
+					// 查看支持的色彩格式
+					MediaCodecInfo.CodecCapabilities caps = mediaCodec.getCodecInfo().getCapabilitiesForType(mimeType);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 
-				//用于临时处理 surfaceView还没有create，却调用configure导致崩溃的问题
+				// 用于临时处理 surfaceView还没有create，却调用configure导致崩溃的问题
 				while (!VideoPlayView.isCreate){
 					try {
 						Thread.sleep(100);
@@ -59,7 +58,8 @@ public class VideoDecodeThread extends Thread {
 					}
 				}
 				// 指定解码的帧格式
-//				format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible); // 60fps下出现音画不同步现象
+//				format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible); // 华为60fps下出现音画不同步现象
+//				format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar);// RK3288上运行正常
 				mediaCodec.configure(format, surface, null, 0);
 				break;
 			}
@@ -108,9 +108,13 @@ public class VideoDecodeThread extends Thread {
 					Log.d(TAG, "dequeueOutputBuffer timed out!");
 					break;
 				default:
+					// 在RK3288开发板上实测发现mediaCodec.configure时绑定surface的话这里outputBuffer就会变成null
+					// 其余机型上未发现该情况
+					// 解决办法可以修改VideoPlayView为VideoPlayer类
 					ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outIndex);
 					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + outputBuffer);
 
+					// 获取每一帧图片
 //					Image image = mediaCodec.getOutputImage(outIndex);
 //					image.close();
 

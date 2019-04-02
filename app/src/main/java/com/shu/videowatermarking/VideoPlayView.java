@@ -10,7 +10,7 @@ import android.view.SurfaceView;
 
 public class VideoPlayView extends SurfaceView implements SurfaceHolder.Callback {
 
-	private static final String strVideo = Environment.getExternalStorageDirectory().getPath() + "/h264_1080p_60fps.mp4";
+	private static final String strVideo = Environment.getExternalStorageDirectory().getPath() + "/h265_1080p_60fps.mp4";
 	private VideoDecodeThread thread;
 	private SoundDecodeThread soundDecodeThread;
 	public static boolean isCreate = false;
