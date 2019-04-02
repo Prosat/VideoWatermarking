@@ -1,8 +1,11 @@
 package com.shu.VideoWatermarking;
 
+import android.media.Image;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Surface;
 
@@ -55,6 +58,8 @@ public class VideoDecodeThread extends Thread {
 						e.printStackTrace();
 					}
 				}
+				// 指定解码的帧格式
+//				format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible); // 60fps下出现音画不同步现象
 				mediaCodec.configure(format, surface, null, 0);
 				break;
 			}
@@ -66,10 +71,6 @@ public class VideoDecodeThread extends Thread {
 		}
 
 		mediaCodec.start(); // 启动MediaCodec ，等待传入数据
-		// 输入
-		ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers(); // 用来存放目标文件的数据
-		// 输出
-		ByteBuffer[] outputBuffers = mediaCodec.getOutputBuffers(); // 解码后的数据
 		MediaCodec.BufferInfo info = new MediaCodec.BufferInfo(); // 用于描述解码得到的byte[]数据的相关信息
 		boolean bIsEos = false;
 		long startMs = System.currentTimeMillis();
@@ -80,8 +81,8 @@ public class VideoDecodeThread extends Thread {
 			if (!bIsEos) {
 				int inIndex = mediaCodec.dequeueInputBuffer(0);
 				if (inIndex >= 0) {
-					ByteBuffer buffer = inputBuffers[inIndex];
-					int nSampleSize = mediaExtractor.readSampleData(buffer, 0); // 读取一帧数据至buffer中
+					ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inIndex);
+					int nSampleSize = mediaExtractor.readSampleData(inputBuffer, 0); // 读取一帧数据至buffer中
 					if (nSampleSize < 0) {
 						Log.d(TAG, "InputBuffer BUFFER_FLAG_END_OF_STREAM");
 						mediaCodec.queueInputBuffer(inIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
@@ -99,7 +100,6 @@ public class VideoDecodeThread extends Thread {
 			switch (outIndex) {
 				case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
 					Log.d(TAG, "INFO_OUTPUT_BUFFERS_CHANGED");
-					outputBuffers = mediaCodec.getOutputBuffers();
 					break;
 				case MediaCodec.INFO_OUTPUT_FORMAT_CHANGED:
 					Log.d(TAG, "New format " + mediaCodec.getOutputFormat());
@@ -108,8 +108,12 @@ public class VideoDecodeThread extends Thread {
 					Log.d(TAG, "dequeueOutputBuffer timed out!");
 					break;
 				default:
-					ByteBuffer buffer = outputBuffers[outIndex];
-					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + buffer);
+					ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outIndex);
+					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + outputBuffer);
+
+//					Image image = mediaCodec.getOutputImage(outIndex);
+//					image.close();
+
 
 					//防止视频播放过快
 					while (info.presentationTimeUs / 1000 > System.currentTimeMillis() - startMs) {

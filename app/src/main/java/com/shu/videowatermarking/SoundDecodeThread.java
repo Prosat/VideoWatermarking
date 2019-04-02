@@ -9,9 +9,6 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-/**
- * Created by xiaoqi on 2018/1/5.
- */
 
 public class SoundDecodeThread extends Thread {
 
@@ -59,10 +56,6 @@ public class SoundDecodeThread extends Thread {
 		}
 
 		mediaCodec.start(); // 启动MediaCodec ，等待传入数据
-		ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers(); // 用来存放目标文件的数据
-		// 输入
-		ByteBuffer[] outputBuffers = mediaCodec.getOutputBuffers(); // 解码后的数据
-		// 输出
 		MediaCodec.BufferInfo info = new MediaCodec.BufferInfo(); // 用于描述解码得到的byte[]数据的相关信息
 		boolean bIsEos = false;
 		long startMs = System.currentTimeMillis();
@@ -73,8 +66,8 @@ public class SoundDecodeThread extends Thread {
 			if (!bIsEos) {
 				int inIndex = mediaCodec.dequeueInputBuffer(0);
 				if (inIndex >= 0) {
-					ByteBuffer buffer = inputBuffers[inIndex];
-					int nSampleSize = mediaExtractor.readSampleData(buffer, 0); // 读取一帧数据至buffer中
+					ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inIndex);
+					int nSampleSize = mediaExtractor.readSampleData(inputBuffer, 0); // 读取一帧数据至buffer中
 					if (nSampleSize < 0) {
 						Log.d(TAG, "InputBuffer BUFFER_FLAG_END_OF_STREAM");
 						mediaCodec.queueInputBuffer(inIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
@@ -91,7 +84,6 @@ public class SoundDecodeThread extends Thread {
 			switch (outIndex) {
 				case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
 					Log.d(TAG, "INFO_OUTPUT_BUFFERS_CHANGED");
-					outputBuffers = mediaCodec.getOutputBuffers();
 					break;
 				case MediaCodec.INFO_OUTPUT_FORMAT_CHANGED:
 					Log.d(TAG, "New format " + mediaCodec.getOutputFormat());
@@ -100,8 +92,8 @@ public class SoundDecodeThread extends Thread {
 					Log.d(TAG, "dequeueOutputBuffer timed out!");
 					break;
 				default:
-					ByteBuffer buffer = outputBuffers[outIndex];
-					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + buffer);
+					ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outIndex);
+					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + outputBuffer);
 
 					while (info.presentationTimeUs / 1000 > System.currentTimeMillis() - startMs) {
 						try {
@@ -113,9 +105,9 @@ public class SoundDecodeThread extends Thread {
 					}
 					//用来保存解码后的数据
 					byte[] outData = new byte[info.size];
-					buffer.get(outData);
+					outputBuffer.get(outData);
 					//清空缓存
-					buffer.clear();
+					outputBuffer.clear();
 					//播放解码后的数据
 					mPlayer.play(outData, 0, info.size);
 					mediaCodec.releaseOutputBuffer(outIndex, true);
