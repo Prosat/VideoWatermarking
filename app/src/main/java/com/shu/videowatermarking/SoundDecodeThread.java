@@ -94,7 +94,7 @@ public class SoundDecodeThread extends Thread {
 					break;
 				default:
 					ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outIndex);
-					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + outputBuffer);
+//					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + outputBuffer);
 
 					while (info.presentationTimeUs / 1000 > System.currentTimeMillis() - startMs) {
 						try {
