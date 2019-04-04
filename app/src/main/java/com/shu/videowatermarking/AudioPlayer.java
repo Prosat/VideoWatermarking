@@ -30,9 +30,13 @@ public class AudioPlayer {
 		mAudioTrack.play();
 	}
 
-	/**
-	 * 释放资源
-	 */
+
+	public void stop() {
+		if (mAudioTrack != null) {
+			mAudioTrack.stop();
+		}
+	}
+
 	private void release() {
 		if (mAudioTrack != null) {
 			mAudioTrack.stop();

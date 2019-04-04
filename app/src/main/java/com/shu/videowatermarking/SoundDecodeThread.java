@@ -122,6 +122,7 @@ public class SoundDecodeThread extends Thread {
 			}
 		}
 
+		mPlayer.stop();
 		mediaCodec.stop();
 		mediaCodec.release();
 		mediaExtractor.release();
