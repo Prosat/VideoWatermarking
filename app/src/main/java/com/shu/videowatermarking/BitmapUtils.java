@@ -125,14 +125,12 @@ public class BitmapUtils {
 
     public static byte[] swapNV21AndNV12(byte[] in,int width,int height) {
         if (in == null) return null;
-        int framesize = width * height;
+        int frameSize = width * height;
         byte[] out = new byte[in.length];
-        System.arraycopy(in, 0, out, 0, framesize);
-        for (int i = 0; i < framesize / 2; i += 2) {
-            out[framesize + i - 1] = in[i + framesize];
-        }
-        for (int i = 0; i < framesize / 2; i += 2) {
-            out[framesize + i] = in[i + framesize - 1];
+        System.arraycopy(in, 0, out, 0, frameSize);
+        for (int i = 0; i < frameSize / 2; i += 2) {
+            out[frameSize + i - 1] = in[i + frameSize];
+            out[frameSize + i] = in[i + frameSize - 1];
         }
         return out;
     }

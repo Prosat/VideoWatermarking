@@ -144,34 +144,41 @@ public class VideoDecodeThread extends Thread {
 					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + outputBuffer);
 
 
-					/*
-					// 直接读取outputBuffer里面的内容转化为图片效率更高
+					// 方法一：耗时1650ms
+					// 直接读取outputBuffer里面的内容转化为图片
 					// 但是现在没有将NV12转换为Bitmap的方法
 					// 要手动将NV12转NV21再转YuvImage
 					// 由YuvImage转化为JPEG最后转为Bitmap
-					// 效率极低
-					// 耗时2000ms
+					// 效率较低
 
-					//直接将outputBuffer转Bitmap耗时200ms
 
 					// 如果可以将NV12转换为ARGB_8888就可以直接转化为Bitmap
 					// I420转ARGB_8888也可以考虑 因为RK3288支持I420
 					// 或者用OpenCV的cvtColor
 
+                    long startTestMs = System.currentTimeMillis();
 					MediaFormat outputFormat = mediaCodec.getOutputFormat();
 					byte[] outData = new byte[info.size];
 					outputBuffer.get(outData);
 					outputBuffer.clear();
 
 					int width = outputFormat.getInteger(MediaFormat.KEY_WIDTH);
+					if (outputFormat.containsKey("crop-left") && outputFormat.containsKey("crop-right")) {
+						width = outputFormat.getInteger("crop-right") + 1 - outputFormat.getInteger("crop-left");
+					}
 					int height = outputFormat.getInteger(MediaFormat.KEY_HEIGHT);
+					if (outputFormat.containsKey("crop-top") && outputFormat.containsKey("crop-bottom")) {
+						height = outputFormat.getInteger("crop-bottom") + 1 - outputFormat.getInteger("crop-top");
+					}
+
 					Bitmap bitmap = BitmapUtils.nv21ToBitmap(BitmapUtils.swapNV21AndNV12(outData,width,height),new Rect(0,0,width,height));
-//					Bitmap bitmap = BitmapUtils.nv21ToBitmap(outData,new Rect(0,0,width,height));
-                    */
+//					Bitmap bitmap = BitmapUtils.nv21ToBitmap(outData,new Rect(0,0,width,height)); // 直接将outputBuffer转Bitmap耗时200ms
+                    long testTime = System.currentTimeMillis() - startTestMs;
 
 
-
-					// 获取每一帧图片
+                    /*
+					// 方法二：总耗时3100ms
+					// 获取每一帧Image图片并转化为YUV
 					Image image = mediaCodec.getOutputImage(outIndex);
 					outputFrameCount++;
 					Log.v(TAG, "Successfully get the "+ outputFrameCount + " output image");
@@ -201,6 +208,7 @@ public class VideoDecodeThread extends Thread {
 							break;
 					}
 					image.close();
+					*/
 
 
 					//防止视频播放过快
