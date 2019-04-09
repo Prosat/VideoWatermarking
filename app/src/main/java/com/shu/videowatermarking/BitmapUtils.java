@@ -1,22 +1,11 @@
 package com.shu.VideoWatermarking;
 
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.ImageFormat;
-import android.graphics.Paint;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
+import android.graphics.*;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.Image;
 import android.support.annotation.ColorInt;
-import android.util.Log;
 import android.view.View;
 
 import java.io.ByteArrayOutputStream;
@@ -135,6 +124,7 @@ public class BitmapUtils {
         return out;
     }
 
+    // 用于解析Image类的函数，可以将任何格式的YUV转化为NV21或者I420
     public static byte[] getDataFromImage(Image image, int colorFormat) {
         if (colorFormat != COLOR_FormatI420 && colorFormat != COLOR_FormatNV21) {
             throw new IllegalArgumentException("only support COLOR_FormatI420 " + "and COLOR_FormatNV21");
@@ -282,7 +272,6 @@ public class BitmapUtils {
     {
         return bitmap == null;
     }
-
 
 
 

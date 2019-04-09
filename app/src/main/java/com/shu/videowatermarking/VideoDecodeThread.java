@@ -14,6 +14,11 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.Surface;
 import android.support.annotation.NonNull;
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -82,15 +87,15 @@ public class VideoDecodeThread extends Thread {
 				}
 
 				// RK3288默认输出COLOR_FormatYUV420SemiPlanar(NV12)
-				// RK3288也支持COLOR_FormatYUV420Planar就是I420
-				int decodeColorFormat = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar;
+                // 实测在RK3288上设置格式没用,永远是COLOR_FormatYUV420SemiPlanar
+//				int decodeColorFormat = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
 				// 指定解码的帧格式
-				if (isColorFormatSupported(decodeColorFormat, mediaCodec.getCodecInfo().getCapabilitiesForType(mimeType))) {
-					format.setInteger(MediaFormat.KEY_COLOR_FORMAT, decodeColorFormat);
-					Log.i(TAG, "Set decode color format to type " + decodeColorFormat);
-				} else {
-					Log.i(TAG, "Unable to set decode color format, color format type " + decodeColorFormat + " not supported");
-				}
+//				if (isColorFormatSupported(decodeColorFormat, mediaCodec.getCodecInfo().getCapabilitiesForType(mimeType))) {
+//					format.setInteger(MediaFormat.KEY_COLOR_FORMAT, decodeColorFormat);
+//					Log.i(TAG, "Set decode color format to type " + decodeColorFormat);
+//				} else {
+//					Log.i(TAG, "Unable to set decode color format, color format type " + decodeColorFormat + " not supported");
+//				}
 
 				mediaCodec.configure(format, null, null, 0);
 				break;
@@ -143,41 +148,51 @@ public class VideoDecodeThread extends Thread {
 					ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outIndex);
 					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + outputBuffer);
 
-
-					// 方法一：耗时1650ms
-					// 直接读取outputBuffer里面的内容转化为图片
-					// 但是现在没有将NV12转换为Bitmap的方法
-					// 要手动将NV12转NV21再转YuvImage
-					// 由YuvImage转化为JPEG最后转为Bitmap
-					// 效率较低
-
-
-					// 如果可以将NV12转换为ARGB_8888就可以直接转化为Bitmap
-					// I420转ARGB_8888也可以考虑 因为RK3288支持I420
-					// 或者用OpenCV的cvtColor
+					// 方法一
+                    // 直接读取outputBuffer的内容创建opencv的Mat
+                    // 再将其转换为ARGB_8888的Bitmap,耗时不超过50ms
+                    // 如果转换为RGB565的Bitmap,耗时不超过30ms
 
                     long startTestMs = System.currentTimeMillis();
 					MediaFormat outputFormat = mediaCodec.getOutputFormat();
-					byte[] outData = new byte[info.size];
-					outputBuffer.get(outData);
-					outputBuffer.clear();
 
-					int width = outputFormat.getInteger(MediaFormat.KEY_WIDTH);
-					if (outputFormat.containsKey("crop-left") && outputFormat.containsKey("crop-right")) {
-						width = outputFormat.getInteger("crop-right") + 1 - outputFormat.getInteger("crop-left");
-					}
-					int height = outputFormat.getInteger(MediaFormat.KEY_HEIGHT);
-					if (outputFormat.containsKey("crop-top") && outputFormat.containsKey("crop-bottom")) {
-						height = outputFormat.getInteger("crop-bottom") + 1 - outputFormat.getInteger("crop-top");
-					}
+					// 为了兼容老机型需要查询是否有crop-left等参数并将其换算为width和height
+                    int width = outputFormat.getInteger(MediaFormat.KEY_WIDTH);
+                    if (outputFormat.containsKey("crop-left") && outputFormat.containsKey("crop-right")) {
+                        width = outputFormat.getInteger("crop-right") + 1 - outputFormat.getInteger("crop-left");
+                    }
+                    int height = outputFormat.getInteger(MediaFormat.KEY_HEIGHT);
+                    if (outputFormat.containsKey("crop-top") && outputFormat.containsKey("crop-bottom")) {
+                        height = outputFormat.getInteger("crop-bottom") + 1 - outputFormat.getInteger("crop-top");
+                    }
 
-					Bitmap bitmap = BitmapUtils.nv21ToBitmap(BitmapUtils.swapNV21AndNV12(outData,width,height),new Rect(0,0,width,height));
-//					Bitmap bitmap = BitmapUtils.nv21ToBitmap(outData,new Rect(0,0,width,height)); // 直接将outputBuffer转Bitmap耗时200ms
+                    // 这里直接从outputBuffer中读取数据到Mat中
+                    // 由于是YUV420格式outputBuffer中总数据量为height * width * 3 / 2
+                    // 所以rows参数是height * 3 / 2
+                    Mat srcMat = new Mat(height * 3 / 2, width, CvType.CV_8UC1, outputBuffer);
+                    Mat dstMat = new Mat();
+
+                    switch (outputFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT)) {
+                        case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar:
+                            Imgproc.cvtColor(srcMat,dstMat,Imgproc.COLOR_YUV2RGB_I420);
+                            break;
+                        case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar:
+                            Imgproc.cvtColor(srcMat,dstMat,Imgproc.COLOR_YUV2RGB_NV12);
+                            break;
+                            default:
+                                Log.e(TAG, "Unsupported color format!");
+                    }
+
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+                    Utils.matToBitmap(dstMat,bitmap);
+
                     long testTime = System.currentTimeMillis() - startTestMs;
+                    Log.d(TAG, "testTime: " +  testTime);
 
 
                     /*
-					// 方法二：总耗时3100ms
+					// 方法二
+					// 可以解析任何格式YUV转化为I420或者NV21
 					// 获取每一帧Image图片并转化为YUV
 					Image image = mediaCodec.getOutputImage(outIndex);
 					outputFrameCount++;
