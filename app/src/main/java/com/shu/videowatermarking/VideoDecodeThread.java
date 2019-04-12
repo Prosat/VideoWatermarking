@@ -44,21 +44,50 @@ public class VideoDecodeThread extends Thread {
 
 	private MediaCodec mediaCodec;
 
-	private Surface surface;
-
 	private String path;
 
-	public VideoDecodeThread(Surface surface, String path) {
-		this.surface = surface;
+	private Thread childThread;
+
+	private Throwable throwable;
+
+	public VideoDecodeThread(String path) {
 		this.path = path;
+	}
+
+//设置回调
+    private Callback callback;
+
+    public interface Callback {
+        void callbackMethod(final Bitmap bitmap);
+    }
+    public void setCallback(Callback callback) {
+        this.callback = callback;
+    }
+
+	public void decode(String videoFilePath) throws Throwable {
+
+		if (childThread == null) {
+			childThread = new Thread(this, "decode");
+			childThread.start();
+			if (throwable != null) {
+				throw throwable;
+			}
+		}
 	}
 
 	@Override
 	public void run() {
+		try {
+			videoDecode();
+		} catch (Throwable t) {
+			throwable = t;
+		}
+	}
+
+	public void videoDecode() {
 		MediaExtractor mediaExtractor = new MediaExtractor();
 		try {
 			mediaExtractor.setDataSource(path); // 设置数据源
-			setOutputDir(outputDir);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -78,13 +107,13 @@ public class VideoDecodeThread extends Thread {
 				}
 
 				// 用于临时处理 surfaceView还没有create，却调用configure导致崩溃的问题
-				while (!VideoPlayView.isCreate){
-					try {
-						Thread.sleep(100);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
+//				while (!VideoPlayView.isCreate){
+//					try {
+//						Thread.sleep(100);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
+//				}
 
 				// RK3288默认输出COLOR_FormatYUV420SemiPlanar(NV12)
                 // 实测在RK3288上设置格式没用,永远是COLOR_FormatYUV420SemiPlanar
@@ -111,7 +140,7 @@ public class VideoDecodeThread extends Thread {
 		MediaCodec.BufferInfo info = new MediaCodec.BufferInfo(); // 用于描述解码得到的byte[]数据的相关信息
 		boolean bIsEos = false;
 		long startMs = System.currentTimeMillis();
-		int outputFrameCount = 0;
+
 
 		// ==========开始解码=============
 		while (!Thread.interrupted()) {
@@ -185,10 +214,10 @@ public class VideoDecodeThread extends Thread {
 
                     Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
                     Utils.matToBitmap(dstMat,bitmap);
-
                     long testTime = System.currentTimeMillis() - startTestMs;
                     Log.d(TAG, "testTime: " +  testTime);
 
+                    callback.callbackMethod(bitmap);
 
                     /*
 					// 方法二
