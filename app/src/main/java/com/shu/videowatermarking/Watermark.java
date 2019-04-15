@@ -4,13 +4,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.media.Image;
-import android.support.annotation.FontRes;
-import android.support.v4.content.res.FontResourcesParserCompat;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class Watermark {
     private Bitmap bitmap;

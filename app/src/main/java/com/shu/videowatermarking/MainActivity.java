@@ -3,22 +3,13 @@ package com.shu.VideoWatermarking;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.os.Bundle;
-import android.os.Environment;
+import android.os.*;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
+import android.view.WindowManager;
 import android.widget.ImageView;
-import android.os.Handler;
-
-
-import android.os.Message;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity implements VideoDecodeThread.Callback{
 
@@ -54,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements VideoDecodeThread
 			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_WRITE_EXTERNAL_STORAGE);
 		}
 		// 所支持的编码信息的方法可以直接查看手机下 /system/etc/media_codecs.xml 来获得
+
+        hideStatusNavigationBar();
 	}
 
 	@Override
@@ -73,6 +66,14 @@ public class MainActivity extends AppCompatActivity implements VideoDecodeThread
 		soundDecodeThread = new SoundDecodeThread(strVideo);// 开启音频线程
 		soundDecodeThread.start();
 	}
+
+    private void hideStatusNavigationBar(){
+		int uiFlags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                     | View.SYSTEM_UI_FLAG_FULLSCREEN //hide statusBar
+                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION; //hide navigationBar
+		getWindow().getDecorView().setSystemUiVisibility(uiFlags);
+    }
 
 	// VideoDecodeThread回调的程序，将解码生成的bitmap传递给主线程
 	@Override

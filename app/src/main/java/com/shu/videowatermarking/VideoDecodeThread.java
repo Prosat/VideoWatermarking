@@ -1,31 +1,18 @@
 package com.shu.VideoWatermarking;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.ImageFormat;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
-import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.os.Environment;
 import android.util.Log;
-import android.view.Surface;
-import android.support.annotation.NonNull;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
@@ -64,7 +51,7 @@ public class VideoDecodeThread extends Thread {
 		}
 	}
 
-	public void videoDecode() {
+	private void videoDecode() {
 		MediaExtractor mediaExtractor = new MediaExtractor();
 		try {
 			mediaExtractor.setDataSource(path); // 设置数据源

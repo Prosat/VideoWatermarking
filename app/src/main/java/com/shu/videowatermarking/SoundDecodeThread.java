@@ -20,12 +20,22 @@ public class SoundDecodeThread extends Thread {
 
 	private String path;
 
+	private Throwable throwable;
+
 	public SoundDecodeThread(String path) {
 		this.path = path;
 	}
 
 	@Override
 	public void run() {
+		try {
+			soundDecode();
+		} catch (Throwable t) {
+			throwable = t;
+		}
+	}
+
+	private void soundDecode() {
 		MediaExtractor mediaExtractor = new MediaExtractor();
 		try {
 			mediaExtractor.setDataSource(path); // 设置数据源
