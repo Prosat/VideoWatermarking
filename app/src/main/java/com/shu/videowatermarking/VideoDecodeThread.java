@@ -184,6 +184,8 @@ public class VideoDecodeThread extends Thread {
 
                     Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
                     Utils.matToBitmap(dstMat, bitmap);
+                    Watermark watermark = new Watermark(bitmap);
+                    bitmap = watermark.addWatermark();
                     long testTime = System.currentTimeMillis() - startTestMs;
                     Log.d(TAG, "testTime: " +  testTime);
 

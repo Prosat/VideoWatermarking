@@ -54,13 +54,6 @@ public class MainActivity extends AppCompatActivity implements VideoDecodeThread
 			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_WRITE_EXTERNAL_STORAGE);
 		}
 		// 所支持的编码信息的方法可以直接查看手机下 /system/etc/media_codecs.xml 来获得
-
-		videoDecodeThread = new VideoDecodeThread(strVideo);// 开启视频线程
-        soundDecodeThread = new SoundDecodeThread(strVideo);// 开启音频线程
-		videoDecodeThread.setCallback(this);
-
-		videoDecodeThread.start();
-		soundDecodeThread.start();
 	}
 
 	@Override
@@ -73,15 +66,12 @@ public class MainActivity extends AppCompatActivity implements VideoDecodeThread
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if(videoDecodeThread == null) {
-			videoDecodeThread = new VideoDecodeThread(strVideo);
-			videoDecodeThread.setCallback(this);
-			videoDecodeThread.start();
-		}
-		if(soundDecodeThread == null) {
-			soundDecodeThread = new SoundDecodeThread(strVideo);
-			soundDecodeThread.start();
-		}
+		videoDecodeThread = new VideoDecodeThread(strVideo);// 开启视频线程
+		videoDecodeThread.setCallback(this);
+		videoDecodeThread.start();
+
+		soundDecodeThread = new SoundDecodeThread(strVideo);// 开启音频线程
+		soundDecodeThread.start();
 	}
 
 	// VideoDecodeThread回调的程序，将解码生成的bitmap传递给主线程
