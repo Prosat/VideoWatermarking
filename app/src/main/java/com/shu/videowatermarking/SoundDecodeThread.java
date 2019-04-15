@@ -104,19 +104,18 @@ public class SoundDecodeThread extends Thread {
 							break;
 						}
 					}
-					//用来保存解码后的数据
+					// 用来保存解码后的数据
 					byte[] outData = new byte[info.size];
 					outputBuffer.get(outData);
-					//清空缓存
+					// 清空缓存
 					outputBuffer.clear();
-					//播放解码后的数据
+					// 播放解码后的数据
 					mPlayer.play(outData, 0, info.size);
 					mediaCodec.releaseOutputBuffer(outIndex, true);
 					break;
 			}
 
-			// All decoded frames have been rendered, we can stop playing
-			// now
+            // 所有解码后的帧都已经被渲染，现在可以停止解码
 			if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
 				break;
 			}
